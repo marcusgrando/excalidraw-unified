@@ -6,7 +6,7 @@
 # -----------------------------------------------------------------------------
 # Stage 1: Build Excalidraw Frontend
 # -----------------------------------------------------------------------------
-FROM node:22-alpine AS frontend-builder
+FROM node:24-alpine AS frontend-builder
 
 WORKDIR /opt/excalidraw
 
@@ -25,7 +25,7 @@ RUN yarn build:app:docker
 # -----------------------------------------------------------------------------
 # Stage 2: Build Excalidraw Room Server
 # -----------------------------------------------------------------------------
-FROM node:22-alpine AS room-builder
+FROM node:24-alpine AS room-builder
 
 WORKDIR /opt/room
 
@@ -40,14 +40,14 @@ RUN rm -rf node_modules && yarn install --production --network-timeout 600000
 # -----------------------------------------------------------------------------
 # Stage 3: Final Image
 # -----------------------------------------------------------------------------
-FROM node:22-alpine
+FROM node:24-alpine
 
 LABEL maintainer="excalidraw-unified"
 LABEL description="Excalidraw with collaboration support in a single container"
 
 RUN apk add --no-cache nginx supervisor bash
 
-RUN mkdir -p /var/log/supervisor /run/nginx /app/frontend /app/room
+RUN mkdir -p /var/log/supervisor /run/nginx /app/frontend /app/room /etc/supervisor/conf.d
 
 COPY --from=frontend-builder /opt/excalidraw/excalidraw-app/build /app/frontend
 COPY --from=room-builder /opt/room/dist /app/room/dist

@@ -45,7 +45,7 @@ FROM node:24-alpine
 LABEL maintainer="excalidraw-unified"
 LABEL description="Excalidraw with collaboration support in a single container"
 
-RUN apk add --no-cache nginx supervisor bash
+RUN apk add --no-cache nginx supervisor bash curl
 
 RUN mkdir -p /var/log/supervisor /run/nginx /app/frontend /app/room /etc/supervisor/conf.d
 
@@ -59,7 +59,7 @@ COPY --from=room-builder /opt/room/package.json /app/room/
 # -----------------------------------------------------------------------------
 RUN cat > /etc/nginx/nginx.conf << 'NGINX_EOF'
 worker_processes auto;
-error_log /var/log/nginx/error.log warn;
+error_log /dev/stderr warn;
 pid /run/nginx/nginx.pid;
 
 events {
@@ -74,7 +74,7 @@ http {
                     '$status $body_bytes_sent "$http_referer" '
                     '"$http_user_agent"';
 
-    access_log /var/log/nginx/access.log main;
+    access_log /dev/stdout main;
 
     sendfile on;
     tcp_nopush on;
@@ -210,8 +210,8 @@ ENV EXCALIDRAW_URL=http://localhost
 
 EXPOSE 6001
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget -q --spider http://localhost:6001/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -sf http://localhost:6001/health || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

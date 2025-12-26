@@ -14,7 +14,7 @@ RUN apk add --no-cache git
 
 RUN git clone --depth 1 https://github.com/excalidraw/excalidraw.git .
 
-RUN bun install --frozen-lockfile
+RUN bun install
 
 ENV VITE_APP_WS_SERVER_URL="__EXCALIDRAW_WS_URL__"
 ENV VITE_APP_DISABLE_TRACKING=true
@@ -33,9 +33,9 @@ RUN apk add --no-cache git
 
 RUN git clone --depth 1 https://github.com/excalidraw/excalidraw-room.git .
 
-RUN bun install --frozen-lockfile && bun run build
+RUN bun install && bun run build
 
-RUN bun install --production
+RUN rm -rf node_modules && bun install --production
 
 # -----------------------------------------------------------------------------
 # Stage 3: Final Image

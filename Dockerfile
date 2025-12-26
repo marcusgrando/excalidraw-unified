@@ -1,31 +1,31 @@
 # =============================================================================
 # Excalidraw Unified - Single image with Frontend + Room + Nginx
-# Using Bun for faster builds and runtime
+# Using Node.js LTS (22.x)
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # Stage 1: Build Excalidraw Frontend
 # -----------------------------------------------------------------------------
-FROM oven/bun:1-alpine AS frontend-builder
+FROM node:22-alpine AS frontend-builder
 
 WORKDIR /opt/excalidraw
 
-RUN apk add --no-cache git npm
+RUN apk add --no-cache git
 
 RUN git clone --depth 1 https://github.com/excalidraw/excalidraw.git .
 
-RUN npm install -g yarn && bun install
+RUN yarn install --network-timeout 600000
 
 ENV VITE_APP_WS_SERVER_URL="__EXCALIDRAW_WS_URL__"
 ENV VITE_APP_DISABLE_TRACKING=true
 ENV NODE_ENV=production
 
-RUN bun run build:app:docker
+RUN yarn build:app:docker
 
 # -----------------------------------------------------------------------------
 # Stage 2: Build Excalidraw Room Server
 # -----------------------------------------------------------------------------
-FROM oven/bun:1-alpine AS room-builder
+FROM node:22-alpine AS room-builder
 
 WORKDIR /opt/room
 
@@ -33,14 +33,14 @@ RUN apk add --no-cache git
 
 RUN git clone --depth 1 https://github.com/excalidraw/excalidraw-room.git .
 
-RUN bun install && bun run build
+RUN yarn install --network-timeout 600000 && yarn build
 
-RUN rm -rf node_modules && bun install --production
+RUN rm -rf node_modules && yarn install --production --network-timeout 600000
 
 # -----------------------------------------------------------------------------
 # Stage 3: Final Image
 # -----------------------------------------------------------------------------
-FROM oven/bun:1-alpine
+FROM node:22-alpine
 
 LABEL maintainer="excalidraw-unified"
 LABEL description="Excalidraw with collaboration support in a single container"
@@ -156,7 +156,7 @@ stderr_logfile=/dev/stderr
 stderr_logfile_maxbytes=0
 
 [program:room]
-command=bun run /app/room/dist/index.js
+command=node /app/room/dist/index.js
 directory=/app/room
 autostart=true
 autorestart=true

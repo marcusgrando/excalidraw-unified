@@ -10,11 +10,11 @@ FROM oven/bun:1-alpine AS frontend-builder
 
 WORKDIR /opt/excalidraw
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git npm
 
 RUN git clone --depth 1 https://github.com/excalidraw/excalidraw.git .
 
-RUN bun install
+RUN npm install -g yarn && bun install
 
 ENV VITE_APP_WS_SERVER_URL="__EXCALIDRAW_WS_URL__"
 ENV VITE_APP_DISABLE_TRACKING=true

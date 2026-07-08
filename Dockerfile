@@ -1,6 +1,6 @@
 # =============================================================================
 # Excalidraw Unified - Single image with Frontend + Room + Nginx
-# Using Node.js LTS (24.x)
+# Using Node.js 24 LTS
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -8,17 +8,29 @@
 # -----------------------------------------------------------------------------
 FROM node:24-alpine AS frontend-builder
 
+ARG EXCALIDRAW_REF=latest
+
 WORKDIR /opt/excalidraw
 
 RUN apk add --no-cache git
 
-RUN git clone --depth 1 https://github.com/excalidraw/excalidraw.git .
+RUN set -eux; \
+    git init; \
+    git remote add origin https://github.com/excalidraw/excalidraw.git; \
+    if [ "$EXCALIDRAW_REF" = "latest" ]; then \
+        EXCALIDRAW_REF="$(git ls-remote --tags --refs --sort='v:refname' origin 'v*' | tail -n 1 | sed 's#.*refs/tags/##')"; \
+    fi; \
+    echo "Using Excalidraw ref: $EXCALIDRAW_REF"; \
+    git fetch --depth 1 origin "$EXCALIDRAW_REF"; \
+    git checkout --detach FETCH_HEAD
 
-RUN yarn install --network-timeout 600000
+RUN yarn install --network-timeout 600000 --ignore-engines
 
 ENV VITE_APP_WS_SERVER_URL="__EXCALIDRAW_WS_URL__"
 ENV VITE_APP_DISABLE_TRACKING=true
 ENV NODE_ENV=production
+ENV NODE_OPTIONS=--max-old-space-size=2048
+ENV YARN_IGNORE_ENGINES=1
 
 RUN yarn build:app:docker
 
@@ -27,11 +39,16 @@ RUN yarn build:app:docker
 # -----------------------------------------------------------------------------
 FROM node:24-alpine AS room-builder
 
+ARG EXCALIDRAW_ROOM_REF=03ff435860b508d7cd9e005cfc90f7977ae2a593
+
 WORKDIR /opt/room
 
 RUN apk add --no-cache git
 
-RUN git clone --depth 1 https://github.com/excalidraw/excalidraw-room.git .
+RUN git init \
+    && git remote add origin https://github.com/excalidraw/excalidraw-room.git \
+    && git fetch --depth 1 origin "$EXCALIDRAW_ROOM_REF" \
+    && git checkout --detach FETCH_HEAD
 
 RUN yarn install --network-timeout 600000 && yarn build
 

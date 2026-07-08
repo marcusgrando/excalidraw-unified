@@ -34,6 +34,15 @@ docker run -d \
   excalidraw-unified
 ```
 
+The Docker build uses Node.js 24 LTS and resolves Excalidraw's latest `v*` release tag at build time. To pin a specific version or test another ref, pass build args explicitly:
+
+```bash
+docker build \
+  --build-arg EXCALIDRAW_REF=<commit-or-tag> \
+  --build-arg EXCALIDRAW_ROOM_REF=<commit-or-tag> \
+  -t excalidraw-unified .
+```
+
 ### Dokploy
 
 1. Create a new application of type **Dockerfile**
